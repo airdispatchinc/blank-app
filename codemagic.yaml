@@ -1,0 +1,68 @@
+workflows:
+  default:
+    name: iOS Build
+    instance_type: mac_mini_m1
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: List directory structure
+        script: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          echo "Checking for blank_app:"
+          ls -la blank_app/
+          echo "Checking for main.dart:"
+          ls -la blank_app/lib/main.dart
+      - name: Get Flutter dependencies
+        script: |
+          cd blank_app
+          flutter pub get
+      - name: Install CocoaPods
+        script: |
+          cd blank_app/ios
+          pod install
+      - name: Build iOS app
+        script: |
+          cd blank_app
+          pwd
+          ls -la lib/
+          flutter build ios --debug --no-codesign
+    artifacts:
+      - blank_app/build/ios/iphoneos/*.app
+
+  web-preview:
+    name: Flutter Web Preview
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          cd blank_app
+          flutter pub get
+      - name: Enable Flutter web
+        script: |
+          cd blank_app
+          flutter config --enable-web
+      - name: Build Flutter web
+        script: |
+          cd blank_app
+          flutter build web --release
+      - name: List build output
+        script: |
+          cd blank_app
+          echo "Build output:"
+          ls -la build/web/
+    artifacts:
+      - blank_app/build/web/**
+    publishing:
+      email:
+        recipients:
+          - build@example.com
+        notify:
+          success: true
+          failure: false
