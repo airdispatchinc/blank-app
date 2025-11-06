@@ -1,0 +1,66 @@
+name: Codemagic Build Info
+
+# This workflow is for documentation purposes only
+# Actual builds happen in Codemagic using codemagic.yaml
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Display Codemagic Status
+        run: |
+          echo "======================================"
+          echo "🚀 CI/CD Configuration"
+          echo "======================================"
+          echo ""
+          echo "✅ This project uses Codemagic for CI/CD"
+          echo ""
+          echo "📋 Configured Workflows:"
+          echo "  • web-preview        - Production web builds"
+          echo "  • ios-production     - iOS App Store builds"
+          echo "  • android-production - Android Play Store builds"
+          echo "  • web-staging        - Staging builds"
+          echo "  • pr-check           - Pull request validation"
+          echo ""
+          echo "📂 Flutter Project Location:"
+          echo "  • flutter_app/"
+          echo ""
+          echo "🔗 View builds at: https://codemagic.io"
+          echo ""
+          echo "======================================"
+          
+      - name: Validate codemagic.yaml
+        run: |
+          if [ -f "codemagic.yaml" ]; then
+            echo "✅ codemagic.yaml found"
+            echo ""
+            echo "Checking project_path configuration..."
+            if grep -q "project_path: flutter_app" codemagic.yaml; then
+              echo "✅ project_path correctly set to 'flutter_app'"
+            else
+              echo "⚠️  Warning: project_path not found or incorrect"
+            fi
+          else
+            echo "❌ codemagic.yaml not found!"
+            exit 1
+          fi
+          
+      - name: Validate Flutter Project
+        run: |
+          if [ -f "flutter_app/pubspec.yaml" ]; then
+            echo "✅ Flutter project found at flutter_app/"
+            echo ""
+            echo "Project details:"
+            cat flutter_app/pubspec.yaml | head -5
+          else
+            echo "❌ Flutter project not found at flutter_app/"
+            exit 1
+          fi
