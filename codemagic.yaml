@@ -1,85 +1,43 @@
 workflows:
   ios-workflow:
-    name: iOS Workflow
-    max_build_duration: 120
+    name: iOS Build
+    max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        # Set project path since Flutter app is in subdirectory
-        FLUTTER_PROJECT_PATH: "blank_app"
-    cache:
-      cache_paths:
-        - $HOME/.pub-cache
-        - $FLUTTER_PROJECT_PATH/.dart_tool
-        - $FLUTTER_PROJECT_PATH/ios/Pods
     scripts:
-      - name: Get Flutter packages
+      - name: Navigate to Flutter project and get dependencies
         script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter packages pub get
-      - name: Install iOS dependencies
+          cd blank_app
+          flutter pub get
+      - name: Install CocoaPods dependencies
         script: |
-          cd $FLUTTER_PROJECT_PATH/ios
+          cd blank_app/ios
           pod install
-      - name: Flutter analyze
+      - name: Build iOS app
         script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter analyze
-      - name: Build iOS (no signing)
-        script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter build ios --no-codesign --release
+          cd blank_app
+          flutter build ios --release --no-codesign
     artifacts:
-      - $FLUTTER_PROJECT_PATH/build/ios/iphoneos/*.app
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
+      - blank_app/build/ios/**/*.app
 
   android-workflow:
-    name: Android Workflow
-    max_build_duration: 120
+    name: Android Build
+    max_build_duration: 60
     instance_type: linux_x2
     environment:
       flutter: stable
       java: 17
-      vars:
-        FLUTTER_PROJECT_PATH: "blank_app"
-    cache:
-      cache_paths:
-        - $HOME/.pub-cache
-        - $FLUTTER_PROJECT_PATH/.dart_tool
-        - $HOME/.gradle/caches
     scripts:
-      - name: Get Flutter packages
+      - name: Navigate to Flutter project and get dependencies
         script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter packages pub get
-      - name: Flutter analyze
-        script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter analyze
+          cd blank_app
+          flutter pub get
       - name: Build Android APK
         script: |
-          cd $FLUTTER_PROJECT_PATH
+          cd blank_app
           flutter build apk --release
-      - name: Build Android App Bundle
-        script: |
-          cd $FLUTTER_PROJECT_PATH
-          flutter build appbundle --release
     artifacts:
-      - $FLUTTER_PROJECT_PATH/build/app/outputs/**/*.apk
-      - $FLUTTER_PROJECT_PATH/build/app/outputs/**/*.aab
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
+      - blank_app/build/app/outputs/**/*.apk
