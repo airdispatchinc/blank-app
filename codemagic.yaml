@@ -3,19 +3,32 @@ workflows:
     name: iOS Build
     instance_type: mac_mini_m1
     max_build_duration: 60
-    working_directory: blank_app
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
     scripts:
+      - name: List directory structure
+        script: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          echo "Checking for blank_app:"
+          ls -la blank_app/
+          echo "Checking for main.dart:"
+          ls -la blank_app/lib/main.dart
       - name: Get Flutter dependencies
-        script: flutter pub get
+        script: |
+          cd blank_app
+          flutter pub get
       - name: Install CocoaPods
         script: |
-          cd ios
+          cd blank_app/ios
           pod install
       - name: Build iOS app
-        script: flutter build ios --debug --no-codesign
+        script: |
+          cd blank_app
+          pwd
+          ls -la lib/
+          flutter build ios --debug --no-codesign
     artifacts:
-      - build/ios/iphoneos/*.app
+      - blank_app/build/ios/iphoneos/*.app
