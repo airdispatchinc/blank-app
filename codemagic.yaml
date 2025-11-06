@@ -7,16 +7,20 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      vars:
+        FCI_FLUTTER_SCHEME: Runner
     scripts:
-      - name: Set working directory and get dependencies
+      - name: Get Flutter dependencies
         script: |
-          cd blank_app
+          cd $CM_BUILD_DIR/blank_app
           flutter pub get
-          cd ios
-          pod install
-      - name: Build iOS
+      - name: Install CocoaPods
         script: |
-          cd blank_app
-          flutter build ios --release --no-codesign
+          cd $CM_BUILD_DIR/blank_app/ios
+          pod install
+      - name: Build iOS app
+        script: |
+          cd $CM_BUILD_DIR/blank_app
+          flutter build ios --debug --no-codesign
     artifacts:
       - blank_app/build/ios/iphoneos/*.app
