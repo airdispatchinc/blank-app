@@ -1,5 +1,3 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 enum Environment {
   development,
   staging,
@@ -14,24 +12,10 @@ class EnvironmentConfig {
   static bool get isStaging => _environment == Environment.staging;
   static bool get isProduction => _environment == Environment.production;
   
-  static String get apiBaseUrl => dotenv.env['API_BASE_URL'] ?? '';
-  static String get apiKey => dotenv.env['API_KEY'] ?? '';
-  static String get firebaseApiKey => dotenv.env['FIREBASE_API_KEY'] ?? '';
+  static const String apiBaseUrl = 'https://api.production.example.com';
+  static const String apiKey = 'your_api_key_here';
   
-  static Future<void> initialize({Environment env = Environment.production}) async {
+  static void initialize({Environment env = Environment.production}) {
     _environment = env;
-    
-    final envFile = switch (env) {
-      Environment.development => '.env.dev',
-      Environment.staging => '.env.staging',
-      Environment.production => '.env.prod',
-    };
-    
-    try {
-      await dotenv.load(fileName: envFile);
-    } catch (e) {
-      // Fallback to default .env
-      await dotenv.load(fileName: '.env');
-    }
   }
 }
