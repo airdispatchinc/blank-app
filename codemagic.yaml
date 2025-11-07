@@ -11,9 +11,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      cocoapods: default
-      groups:
-        - production_secrets
       vars:
         FLUTTER_BUILD_MODE: release
         WEB_RENDERER: canvaskit
@@ -53,7 +50,7 @@ workflows:
           
       - name: 🧪 Run unit tests
         script: |
-          flutter test --coverage
+          flutter test
         
       - name: 🏗️ Build Flutter Web (Production)
         script: |
@@ -102,9 +99,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        - production_secrets
-        - app_store_credentials
       vars:
         APP_STORE_APPLE_ID: 1234567890
         BUNDLE_ID: com.enterprise.flutter_app
@@ -180,9 +174,6 @@ workflows:
         - enterprise_keystore
       flutter: stable
       xcode: latest
-      groups:
-        - production_secrets
-        - google_play_credentials
       vars:
         PACKAGE_NAME: com.enterprise.flutter_app
     cache:
@@ -259,8 +250,6 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      groups:
-        - staging_secrets
       vars:
         FLUTTER_BUILD_MODE: release
         WEB_RENDERER: canvaskit
