@@ -7,9 +7,8 @@ workflows:
     name: Flutter Web - Production Build
     instance_type: mac_mini_m2
     max_build_duration: 60
+    working_directory: flutter_app
     environment:
-      # Critical: Points to the actual Flutter project
-      project_path: flutter_app
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -21,7 +20,7 @@ workflows:
     cache:
       cache_paths:
         - $HOME/.pub-cache
-        - $FCI_BUILD_DIR/flutter_app/.dart_tool
+        - .dart_tool
     triggering:
       events:
         - push
@@ -35,58 +34,48 @@ workflows:
     scripts:
       - name: 🔍 Get Flutter packages
         script: |
-          cd flutter_app
           flutter pub get
           
       - name: 🧹 Clean previous builds
         script: |
-          cd flutter_app
           flutter clean
           flutter pub get
           
       - name: 🔧 Generate code (if needed)
         script: |
-          cd flutter_app
           # Uncomment if using code generation
           # flutter pub run build_runner build --delete-conflicting-outputs
+          echo "Skipping code generation"
           
       - name: ✅ Run code analysis
         script: |
-          cd flutter_app
           flutter analyze
           
       - name: 🧪 Run unit tests
         script: |
-          cd flutter_app
           flutter test --coverage
-        test_report: flutter_app/test-results/**/*.xml
         
       - name: 🏗️ Build Flutter Web (Production)
         script: |
-          cd flutter_app
           flutter build web \
             --release \
             --web-renderer $WEB_RENDERER \
-            --dart-define=ENVIRONMENT=production \
-            --source-maps \
-            --pwa-strategy=offline-first
+            --dart-define=ENVIRONMENT=production
             
       - name: 📊 Bundle size analysis
         script: |
-          cd flutter_app
           echo "📦 Web build output size:"
           du -sh build/web
           echo ""
           echo "📄 Main bundle size:"
-          du -h build/web/main.dart.js
+          du -h build/web/main.dart.js 2>/dev/null || echo "main.dart.js not found"
           
       - name: 🎯 Optimize assets
         script: |
-          cd flutter_app/build/web
           echo "✨ Web build ready for deployment"
-          ls -lah
+          ls -lah build/web
     artifacts:
-      - flutter_app/build/web/**
+      - build/web/**
     publishing:
       email:
         recipients:
@@ -103,10 +92,10 @@ workflows:
     name: iOS - Production Build
     instance_type: mac_mini_m2
     max_build_duration: 120
+    working_directory: flutter_app
     integrations:
       app_store_connect: codemagic
     environment:
-      project_path: flutter_app
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.enterprise.flutter_app
@@ -123,7 +112,7 @@ workflows:
       cache_paths:
         - $HOME/.pub-cache
         - $HOME/Library/Caches/CocoaPods
-        - $FCI_BUILD_DIR/flutter_app/ios/Pods
+        - ios/Pods
     triggering:
       events:
         - tag
@@ -142,17 +131,15 @@ workflows:
           
       - name: 📦 Get Flutter packages
         script: |
-          cd flutter_app
           flutter pub get
           
       - name: 🍎 Install CocoaPods
         script: |
-          cd flutter_app/ios
+          cd ios
           pod install
           
       - name: 🏗️ Build iOS App
         script: |
-          cd flutter_app
           flutter build ipa \
             --release \
             --export-options-plist=/Users/builder/export_options.plist \
@@ -160,12 +147,11 @@ workflows:
             
       - name: 📊 App size analysis
         script: |
-          cd flutter_app
           echo "📦 IPA size:"
           du -sh build/ios/ipa/*.ipa
     artifacts:
-      - flutter_app/build/ios/ipa/*.ipa
-      - flutter_app/build/ios/archive/Runner.xcarchive/**/*
+      - build/ios/ipa/*.ipa
+      - build/ios/archive/Runner.xcarchive/**/*
     publishing:
       email:
         recipients:
@@ -188,8 +174,8 @@ workflows:
     name: Android - Production Build
     instance_type: mac_mini_m2
     max_build_duration: 120
+    working_directory: flutter_app
     environment:
-      project_path: flutter_app
       android_signing:
         - enterprise_keystore
       flutter: stable
@@ -203,7 +189,7 @@ workflows:
       cache_paths:
         - $HOME/.pub-cache
         - $HOME/.gradle/caches
-        - $FCI_BUILD_DIR/flutter_app/.dart_tool
+        - .dart_tool
     triggering:
       events:
         - tag
@@ -214,7 +200,7 @@ workflows:
       - name: 🔐 Set up keystore
         script: |
           echo $ANDROID_KEYSTORE_FILE | base64 --decode > $CM_BUILD_DIR/keystore.jks
-          cat >> "$FCI_BUILD_DIR/flutter_app/android/key.properties" <<EOF
+          cat >> "$CM_BUILD_DIR/android/key.properties" <<EOF
           storePassword=$ANDROID_KEYSTORE_PASSWORD
           keyPassword=$ANDROID_KEY_PASSWORD
           keyAlias=$ANDROID_KEY_ALIAS
@@ -223,19 +209,16 @@ workflows:
           
       - name: 📦 Get Flutter packages
         script: |
-          cd flutter_app
           flutter pub get
           
       - name: 🏗️ Build Android App Bundle
         script: |
-          cd flutter_app
           flutter build appbundle \
             --release \
             --dart-define=ENVIRONMENT=production
             
       - name: 🏗️ Build Android APK
         script: |
-          cd flutter_app
           flutter build apk \
             --release \
             --split-per-abi \
@@ -243,16 +226,15 @@ workflows:
             
       - name: 📊 App size analysis
         script: |
-          cd flutter_app
           echo "📦 AAB size:"
           du -sh build/app/outputs/bundle/release/*.aab
           echo ""
           echo "📦 APK sizes:"
           du -sh build/app/outputs/flutter-apk/*.apk
     artifacts:
-      - flutter_app/build/app/outputs/bundle/release/*.aab
-      - flutter_app/build/app/outputs/flutter-apk/*.apk
-      - flutter_app/build/app/outputs/mapping/release/mapping.txt
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/mapping/release/mapping.txt
     publishing:
       email:
         recipients:
@@ -273,8 +255,8 @@ workflows:
     name: Flutter Web - Staging Build
     instance_type: mac_mini_m2
     max_build_duration: 45
+    working_directory: flutter_app
     environment:
-      project_path: flutter_app
       flutter: stable
       xcode: latest
       groups:
@@ -296,18 +278,16 @@ workflows:
     scripts:
       - name: 📦 Get dependencies
         script: |
-          cd flutter_app
           flutter pub get
           
       - name: 🏗️ Build for staging
         script: |
-          cd flutter_app
           flutter build web \
             --release \
             --web-renderer $WEB_RENDERER \
             --dart-define=ENVIRONMENT=staging
     artifacts:
-      - flutter_app/build/web/**
+      - build/web/**
     publishing:
       email:
         recipients:
@@ -324,8 +304,8 @@ workflows:
     name: PR Quality Checks
     instance_type: mac_mini_m2
     max_build_duration: 30
+    working_directory: flutter_app
     environment:
-      project_path: flutter_app
       flutter: stable
       xcode: latest
     cache:
@@ -340,27 +320,22 @@ workflows:
     scripts:
       - name: 📦 Get dependencies
         script: |
-          cd flutter_app
           flutter pub get
           
       - name: 🔍 Format check
         script: |
-          cd flutter_app
           flutter format --set-exit-if-changed .
           
       - name: ✅ Analyze code
         script: |
-          cd flutter_app
           flutter analyze
           
       - name: 🧪 Run tests
         script: |
-          cd flutter_app
           flutter test
           
       - name: 🏗️ Build test (Android)
         script: |
-          cd flutter_app
           flutter build apk --debug
     publishing:
       email:
