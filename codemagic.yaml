@@ -54,10 +54,26 @@ workflows:
         
       - name: 🏗️ Build Flutter Web (Production)
         script: |
-          flutter build web \
-            --release \
-            --web-renderer $WEB_RENDERER \
-            --dart-define=ENVIRONMENT=production
+          set -e
+          echo "🏗️  Starting Fidora Flutter Web build..."
+          
+          # Check if --web-renderer flag is supported
+          if flutter build web -h | grep -q -- "--web-renderer"; then
+            echo "✅ Using supported --web-renderer flag (${WEB_RENDERER:-canvaskit})"
+            flutter build web \
+              --release \
+              --web-renderer "${WEB_RENDERER:-canvaskit}" \
+              --dart-define=ENVIRONMENT=production \
+              --dart-define=FIDORA_ENV=production
+          else
+            echo "⚠️  --web-renderer not supported in this Flutter version. Proceeding without it..."
+            flutter build web \
+              --release \
+              --dart-define=ENVIRONMENT=production \
+              --dart-define=FIDORA_ENV=production
+          fi
+          
+          echo "✅ Build completed successfully!"
             
       - name: 📊 Bundle size analysis
         script: |
@@ -271,10 +287,26 @@ workflows:
           
       - name: 🏗️ Build for staging
         script: |
-          flutter build web \
-            --release \
-            --web-renderer $WEB_RENDERER \
-            --dart-define=ENVIRONMENT=staging
+          set -e
+          echo "🏗️  Starting Fidora Flutter Web build (Staging)..."
+          
+          # Check if --web-renderer flag is supported
+          if flutter build web -h | grep -q -- "--web-renderer"; then
+            echo "✅ Using supported --web-renderer flag (${WEB_RENDERER:-canvaskit})"
+            flutter build web \
+              --release \
+              --web-renderer "${WEB_RENDERER:-canvaskit}" \
+              --dart-define=ENVIRONMENT=staging \
+              --dart-define=FIDORA_ENV=staging
+          else
+            echo "⚠️  --web-renderer not supported in this Flutter version. Proceeding without it..."
+            flutter build web \
+              --release \
+              --dart-define=ENVIRONMENT=staging \
+              --dart-define=FIDORA_ENV=staging
+          fi
+          
+          echo "✅ Staging build completed successfully!"
     artifacts:
       - build/web/**
     publishing:
