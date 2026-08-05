@@ -1,9 +1,9 @@
 name: BARAS AI Voice Callouts
 
 on:
-  push:
+  pull_request:
     branches:
-      - baras-ai-voice-temp
+      - main
 
 permissions:
   contents: read
