@@ -1,0 +1,59 @@
+name: BARAS AI Voice Callouts
+
+on:
+  push:
+    branches:
+      - baras-ai-voice-temp
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install neural voice renderer
+        run: |
+          python -m pip install --upgrade edge-tts
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+
+      - name: Generate human-quality BARAS callouts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p raw output
+
+          make_voice() {
+            local file="$1"
+            local text="$2"
+            edge-tts \
+              --voice "en-US-AriaNeural" \
+              --rate "+8%" \
+              --pitch "+1Hz" \
+              --volume "+8%" \
+              --text "$text" \
+              --write-media "raw/$file"
+
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "raw/$file" \
+              -af "silenceremove=start_periods=1:start_silence=0.03:start_threshold=-48dB:stop_periods=-1:stop_silence=0.10:stop_threshold=-48dB,loudnorm=I=-15:TP=-1.0:LRA=6" \
+              -ar 44100 -ac 1 -b:a 192k "output/$file"
+          }
+
+          make_voice "big_grenade.mp3" "Big grenade!"
+          make_voice "back_wall_not_safe.mp3" "Back wall, not safe!"
+          make_voice "side_wall_not_safe.mp3" "Side wall, not safe!"
+          make_voice "exit_not_safe.mp3" "Exit, not safe!"
+          make_voice "entrance_not_safe.mp3" "Entrance, not safe!"
+
+          cd output
+          sha256sum *.mp3 > checksums.txt
+
+      - name: Upload finished MP3 files
+        uses: actions/upload-artifact@v4
+        with:
+          name: BARAS-Human-AI-Voice-Callouts
+          path: output/
+          if-no-files-found: error
+          retention-days: 1
